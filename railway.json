@@ -1,7 +1,7 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "buildCommand": "pnpm install && pnpm --filter @workspace/rasd-landing run build"
+    "buildCommand": "pnpm install --no-frozen-lockfile && pnpm --filter @workspace/rasd-landing run build"
   },
   "deploy": {
     "startCommand": "npx --yes serve artifacts/rasd-landing/dist -s -l ${PORT:-3000}",
