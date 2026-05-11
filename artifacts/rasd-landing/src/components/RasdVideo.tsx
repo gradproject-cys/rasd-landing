@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import videoHtml from "../../public/rasd-video.html?raw";
 
 export default function RasdVideo() {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -17,8 +18,6 @@ export default function RasdVideo() {
     return () => ro.disconnect();
   }, []);
 
-  const src = "/rasd-video.html";
-
   return (
     <div
       ref={wrapperRef}
@@ -26,7 +25,7 @@ export default function RasdVideo() {
     >
       <iframe
         ref={iframeRef}
-        src={src}
+        srcDoc={videoHtml}
         title="RASD explainer animation"
         scrolling="no"
         allow="autoplay"
@@ -37,6 +36,7 @@ export default function RasdVideo() {
           height: "100%",
           border: "none",
           display: "block",
+          background: "#000",
         }}
       />
     </div>
