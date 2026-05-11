@@ -1,0 +1,116 @@
+Build a stunning, modern landing page for a cybersecurity graduation project called RASD (دصر).
+  The page should feel like a premium tech product showcase — dark theme, deep navy/black
+  background, with cyan/electric blue glowing accents. Make it fully responsive and mobile-friendly.
+
+  ## PAGE SECTIONS (in order):
+
+  ---
+
+  ### 1. HERO SECTION
+  - Large logo/title: "RASD — دصر"
+  - Subtitle: "AI-Powered Insider Threat Detection for Zero Trust Networks"
+  - A short tagline: "Real-time. Intelligent. Zero Trust."
+  - Add a glowing animated background (subtle particle effect or gradient animation)
+  - Below the tagline, embed a YouTube video placeholder (a centered video embed box
+    with play button). Add a note under it: "Watch how RASD detects insider threats in real-time"
+
+  ---
+
+  ### 2. WHAT IS RASD? (Simple explanation)
+  Use 3 icon cards to explain the system simply:
+
+  Card 1 — 🔍 "Learn Normal Behavior"
+  "RASD studies what each employee normally does on the cloud — when they log in,
+  what files they access, what actions they perform."
+
+  Card 2 — ⚡ "Detect Anomalies Instantly"
+  "The moment someone does something unusual — accessing sensitive files at 3AM,
+  downloading bulk data, or escalating their own privileges — RASD flags it in milliseconds."
+
+  Card 3 — 🛡️ "Automatic Response"
+  "RASD doesn't just alert — it automatically enforces security policies.
+  Block sessions, require extra verification, or lock accounts — all without human intervention."
+
+  ---
+
+  ### 3. IMPRESSIVE STATS (animated counter section)
+  Show these as big glowing numbers that count up on scroll:
+
+  - 0.927 — F1 Detection Score
+  - 0.9999 — AUC-ROC Score
+  - 3ms — Response Latency (target was <100ms)
+  - 4/4 — Red Team Attacks Detected
+  - 245 — Unit Tests Passing
+  - 43 — Behavioral Features Per User
+
+  Under the stats section, add a green badge: "✓ Exceeds all performance targets"
+
+  ---
+
+  ### 4. HOW IT WORKS (timeline/pipeline)
+  A horizontal (or vertical on mobile) visual pipeline with 5 steps:
+
+  Step 1: CloudTrail Event → "Employee performs an action on AWS"
+  Step 2: Feature Extraction → "43 behavioral features extracted in real-time"
+  Step 3: AI Scoring → "XGBoost model scores the risk (0–100)"
+  Step 4: Risk Decision → "LOW / MEDIUM / HIGH / CRITICAL tier assigned"
+  Step 5: Auto-Enforcement → "IAM policy enforced: allow, MFA, restrict, or block"
+
+  ---
+
+  ### 5. TECH STACK (grid of badges/logos)
+  Show these as glowing pill badges:
+  Python • PyTorch • XGBoost • AWS Lambda • Amazon Kinesis • DynamoDB • S3 •
+  CloudTrail • IAM • Docker • SHAP • Zero Trust Architecture
+
+  ---
+
+  ### 6. MEET THE TEAM
+  5 cards in a responsive grid. Each card has:
+  - Name (large)
+  - Role (subtitle, cyan color)
+  - Two buttons: [LinkedIn] [View CV]
+
+  Team members:
+
+  1. Essam Khaled Alotaibi
+     Role: Lead Security Engineer — Zero Trust & IAM
+     LinkedIn: (placeholder link)
+     CV: (placeholder link)
+
+  2. Badi Khalid Alotaibi
+     Role: AWS & ML Infrastructure — S3, DynamoDB, SageMaker
+     LinkedIn: (placeholder link)
+     CV: (placeholder link)
+
+  3. Basil Aidhah Al Zahrani
+     Role: Lead ML Engineer — Autoencoder & Baseline Learning
+     LinkedIn: (placeholder link)
+     CV: (placeholder link)
+
+  4. Basel Falah Alharbi
+     Role: Real-time Integration — Lambda, Kinesis & Performance
+     LinkedIn: (placeholder link)
+     CV: (placeholder link)
+
+  5. Monther Abdulaziz Alqarzee
+     Role: Integration Lead & DevOps — CI/CD, Testing & Monitoring
+     LinkedIn: (placeholder link)
+     CV: (placeholder link)
+
+  ---
+
+  ### 7. FOOTER
+  - "RASD — دصر | Imam AbdulRahman Bin Faisal University | Spring 2026"
+  - Small text: "AI-Based Insider Threat Detection Graduation Project"
+
+  ---
+
+  ## DESIGN REQUIREMENTS:
+  - Dark theme: background #0a0f1e, cards #111827, accents #00d4ff (cyan)
+  - Glowing effects on numbers and key elements (box-shadow with cyan glow)
+  - Smooth scroll animations (fade-in on scroll for each section)
+  - The stat counters should animate (count up) when they enter the viewport
+  - Font: use Inter or Poppins from Google Fonts
+  - All buttons should have hover glow effects
+  - Make it feel like a real product launch page, not a school project

