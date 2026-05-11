@@ -5,13 +5,8 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Amiri:wght@400;700&display=swap');
   * { margin:0; padding:0; box-sizing:border-box; }
-  #scaler {
-    transform-origin: top left;
-    position: absolute;
-    top: 0; left: 0;
-  }
   #rasd-v3 {
-    background:#000; width:1280px; height:720px; position:relative; overflow:hidden;
+    background:#000; width:100%; aspect-ratio:16/9; position:relative; overflow:hidden;
     font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
     user-select:none; border-radius:8px;
   }
@@ -59,7 +54,7 @@
   #rasd-v3 #scene-fade.show { opacity:1; }
 </style>
 
-<div id="scaler"><div id="rasd-v3">
+<div id="rasd-v3">
   <canvas id="bg"></canvas>
   <div id="scene-fade"></div>
   <div class="layer"><div class="text" id="overlay-text"></div></div>
@@ -87,7 +82,7 @@
   </div>
 
   <button id="replay-btn">↻ Replay</button>
-</div></div>
+</div>
 
 <script>
 (function(){
@@ -121,17 +116,9 @@
     {id:5, start:44,   end:52,   name:'reveal'}
   ];
 
-  function scaleViewport(){
-    const scaler = document.getElementById('scaler');
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const scale = Math.min(vw / 1280, vh / 720);
-    scaler.style.transform = 'scale(' + scale + ')';
-    document.body.style.width = vw + 'px';
-    document.body.style.height = (720 * scale) + 'px';
-  }
-
   function resize(){
-    W = root.offsetWidth; H = root.offsetHeight;
+    const r = root.getBoundingClientRect();
+    W = r.width; H = r.height;
     bg.width = W*dpr; bg.height = H*dpr;
     bctx.setTransform(dpr,0,0,dpr,0,0);
   }
@@ -1341,8 +1328,7 @@
     progress.style.width = '0%';
     timecode.textContent = '00:00 / 00:52';
   });
-  window.addEventListener('resize', function(){ scaleViewport(); resize(); });
-  scaleViewport();
+  window.addEventListener('resize', resize);
   resize();
   bctx.fillStyle = '#000';
   bctx.fillRect(0,0,W,H);
