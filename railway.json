@@ -4,7 +4,7 @@
     "buildCommand": "pnpm install --no-frozen-lockfile && pnpm --filter @workspace/rasd-landing run build"
   },
   "deploy": {
-    "startCommand": "npx --yes serve artifacts/rasd-landing/dist -s -l ${PORT:-3000}",
+    "startCommand": "npx --yes serve artifacts/rasd-landing/dist/public -s -l ${PORT:-3000}",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }
