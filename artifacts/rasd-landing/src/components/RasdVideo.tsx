@@ -17,7 +17,7 @@ export default function RasdVideo() {
     return () => ro.disconnect();
   }, []);
 
-  const src = `${import.meta.env.BASE_URL}rasd-video.html`;
+  const src = "/rasd-video.html";
 
   return (
     <div
