@@ -21,7 +21,7 @@ export default function RasdVideo() {
   return (
     <div
       ref={wrapperRef}
-      style={{ position: "relative", width: "100%", paddingBottom: "56.25%" }}
+      style={{ position: "relative", width: "100%", paddingBottom: "56.25%", minHeight: "280px" }}
     >
       <iframe
         ref={iframeRef}
